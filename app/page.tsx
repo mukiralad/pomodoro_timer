@@ -1,101 +1,178 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { Play, Pause, RotateCcw, Edit2 } from "lucide-react"
+
+export default function Component() {
+  const [time, setTime] = useState(25 * 60)
+  const [isActive, setIsActive] = useState(false)
+  const [task, setTask] = useState("")
+  const [sessions, setSessions] = useState(0)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedMinutes, setEditedMinutes] = useState("25")
+  const [editedSeconds, setEditedSeconds] = useState("00")
+  const [randomQuote, setRandomQuote] = useState("")
+  const [isClient, setIsClient] = useState(false)
+
+  const quotes = [
+    "The secret of getting ahead is getting started. - Mark Twain",
+    "It always seems impossible until it's done. - Nelson Mandela",
+    "Don't watch the clock; do what it does. Keep going. - Sam Levenson",
+    "The only way to do great work is to love what you do. - Steve Jobs",
+    "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
+  ]
+
+  useEffect(() => {
+    setIsClient(true)
+    setRandomQuote(quotes[Math.floor(Math.random() * quotes.length)])
+  }, [])
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (isActive && time > 0) {
+      interval = setInterval(() => {
+        setTime((prevTime) => prevTime - 1)
+      }, 1000)
+    } else if (time === 0) {
+      setIsActive(false)
+      setSessions((prevSessions) => prevSessions + 1)
+      setTime(25 * 60)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [isActive, time])
+
+  const toggleTimer = () => {
+    setIsActive(!isActive)
+  }
+
+  const resetTimer = () => {
+    setIsActive(false)
+    setTime(25 * 60)
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
+
+  const handleEditTime = () => {
+    setIsEditing(true)
+    setEditedMinutes(Math.floor(time / 60).toString().padStart(2, "0"))
+    setEditedSeconds((time % 60).toString().padStart(2, "0"))
+  }
+
+  const handleSaveTime = () => {
+    const newTime = parseInt(editedMinutes) * 60 + parseInt(editedSeconds)
+    setTime(newTime)
+    setIsEditing(false)
+  }
+
+  if (!isClient) {
+    return null // or a loading spinner
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-emerald-400 to-cyan-500">
+      <div className="w-full max-w-md p-6 bg-white rounded-3xl shadow-2xl flex flex-col h-screen justify-between">
+        <h1 className="text-3xl font-extrabold text-center text-gray-800 mb-4">Pomodoro Timer</h1>
+        <div className="relative w-48 h-48 mx-auto mb-4">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            <circle
+              className="text-gray-200 stroke-current"
+              strokeWidth="10"
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+            ></circle>
+            <motion.circle
+              className="text-emerald-500 stroke-current"
+              strokeWidth="10"
+              strokeLinecap="round"
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 - time / (25 * 60) }}
+              transition={{ duration: 1, ease: "linear" }}
+            ></motion.circle>
+          </svg>
+          <div className="absolute top-0 left-0 flex items-center justify-center w-full h-full">
+            {isEditing ? (
+              <div className="flex items-center">
+                <input
+                  type="number"
+                  className="w-12 px-1 py-0.5 text-xl font-bold text-center text-gray-800 bg-gray-100 border-2 border-emerald-500 rounded-lg"
+                  value={editedMinutes}
+                  onChange={(e) => setEditedMinutes(e.target.value)}
+                  min="0"
+                  max="59"
+                />
+                <span className="mx-0.5 text-xl font-bold text-gray-800">:</span>
+                <input
+                  type="number"
+                  className="w-12 px-1 py-0.5 text-xl font-bold text-center text-gray-800 bg-gray-100 border-2 border-emerald-500 rounded-lg"
+                  value={editedSeconds}
+                  onChange={(e) => setEditedSeconds(e.target.value)}
+                  min="0"
+                  max="59"
+                />
+              </div>
+            ) : (
+              <span className="text-4xl font-bold text-gray-800">{formatTime(time)}</span>
+            )}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="flex justify-center space-x-4 mb-4">
+          <button
+            className="p-2 text-white bg-emerald-500 rounded-full hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            onClick={toggleTimer}
+          >
+            {isActive ? <Pause size={20} /> : <Play size={20} />}
+          </button>
+          <button
+            className="p-2 text-emerald-500 bg-white border-2 border-emerald-500 rounded-full hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            onClick={resetTimer}
+          >
+            <RotateCcw size={20} />
+          </button>
+          {isEditing ? (
+            <button
+              className="p-2 text-emerald-500 bg-white border-2 border-emerald-500 rounded-full hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              onClick={handleSaveTime}
+            >
+              Save
+            </button>
+          ) : (
+            <button
+              className="p-2 text-emerald-500 bg-white border-2 border-emerald-500 rounded-full hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              onClick={handleEditTime}
+            >
+              <Edit2 size={20} />
+            </button>
+          )}
+        </div>
+        <input
+          type="text"
+          placeholder="What are you working on?"
+          className="w-full px-3 py-2 mb-4 text-sm text-gray-700 bg-gray-100 border-2 border-transparent rounded-lg focus:outline-none focus:border-emerald-500"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+        />
+        <div className="text-center text-gray-600 mb-2">
+          <p className="text-sm font-semibold">Sessions completed: {sessions}</p>
+        </div>
+        <div className="text-center text-gray-600 italic">
+          <p className="text-xs">{randomQuote}</p>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
